@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>AI助手 | 铁路风采</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .chat-box{
+            background:rgba(30,41,59,0.7);
+            border-radius:12px;
+            padding:25px;
+            margin:30px auto;
+            max-width:800px;
+        }
+        .chat-item{
+            margin:15px 0;
+            line-height:1.8;
+            white-space:pre-wrap;
+            word-break:break-all;
+        }
+        .user-say{
+            text-align:right;
+            color:#f0b468;
+        }
+        .ai-say{
+            text-align:left;
+            color:#e5e7eb;
+        }
+        .input-area{
+            display:flex;
+            gap:10px;
+            margin-top:30px;
+        }
+        .input-area input{
+            flex:1;
+            padding:12px 15px;
+            border:none;
+            border-radius:8px;
+            background:#1e293b;
+            color:#fff;
+            outline:none;
+        }
+        .input-area button{
+            padding:12px 25px;
+            background:#f0b468;
+            color:#000;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:bold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <div class="logo">铁路风采</div>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="system-chewu.html">车务</a></li>
+                <li><a href="system-jiwu.html">机务</a></li>
+                <li><a href="system-gongwu.html">工务</a></li>
+                <li><a href="system-dianwu.html">电务</a></li>
+                <li><a href="system-cheliang.html">车辆</a></li>
+                <li><a href="life-photo.html">图文纪实</a></li>
+                <li><a href="ai.html" class="active">AI助手</a></li>
+                <li><a href="about-us.html">关于我们</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <section class="page-header" style="background: url('../images/9.jpg') center/cover no-repeat;">
+        <div class="page-header-content">
+            <h1>铁路智能AI助手</h1>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="section-title">
+            <h2>在线问答 · 知识科普</h2>
+            <p>支持多问题同时解答、长文本智能处理，具备自主学习与专业书籍知识库</p>
+        </div>
+
+        <div class="chat-box" id="chatBox">
+            <div class="chat-item ai-say">
+                AI助手：您好！我整合《铁道概论》等全套铁路专业资料，支持一次性提问多个问题，可智能拆分逐一解答，长文本自动整理排版~
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="userText" placeholder="可一次性输入多个问题，用逗号、句号、换行隔开">
+                <button onclick="sendMsg()">发送咨询</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 铁路主题课程作业 | 版权所有</p>
+    </footer>
+
+<script>
+// 自主学习记忆库
+let learnMemory = [];
+
+// 全网搜索接口（优化后）
+const searchApi = "https://api.suyanw.cn/api/so.php?key=";
+
+// 全套铁路知识库（新增高频问题，关键词优化）
+const bookLib = [
+    {book:"铁道概论",keyword:["铁道概论","铁路基础","铁路系统","铁路发展史","中国铁路"],content:"铁道概论是铁路专业必修基础课程，系统讲解铁路运输基础、线路、车站、机车、车辆、信号通信、运输组织七大板块，是入门核心教材。中国铁路是国家重要基础设施，截至2025年，营业里程超15万公里，高铁里程超4.5万公里，居世界第一。"},
+    {book:"铁路工务基础",keyword:["工务","工务系统","工务段","线路工","桥隧工"],content:"工务系统是铁路的基础保障部门，主要负责线路、桥梁、隧道、路基等设备的养护维修，保障线路几何尺寸达标、结构状态稳定，是列车安全运行的前提。"},
+    {book:"铁路线路养护与维修",keyword:["轨道养护","钢轨","道床","轨枕"],content:"线路养护负责轨道尺寸调校、钢轨伤损处理、道床整修，保障列车运行平稳安全。"},
+    {book:"铁路桥梁施工与维护",keyword:["桥梁","桥隧工","桥墩","梁体"],content:"铁路桥梁跨越地形障碍，日常定期检测病害，及时加固维修，保证结构稳固。"},
+    {book:"铁路隧道工程实务",keyword:["隧道","衬砌","隧道通风"],content:"隧道施工难度大，运营侧重排水通风、结构巡检，防范渗水变形隐患。"},
+    {book:"铁路信号基础设备",keyword:["信号","联锁","闭塞","列控"],content:"铁路信号指挥列车运行，管控道岔与行车秩序，是行车安全核心保障。"},
+    {book:"铁路通信技术应用",keyword:["通信","调度","无线列调"],content:"铁路通信实现车地、站间信息互通，保障行车指令高效传递。"},
+    {book:"机车构造与运用",keyword:["机车","电力机车","内燃机车"],content:"机车提供牵引动力，分为电力与内燃两类，重点维护动力与制动系统。"},
+    {book:"铁路车辆检修技术",keyword:["车辆","走行部","车钩","制动"],content:"车辆检修排查走行部、制动装置隐患，保障客货运列车出行安全。"},
+    {book:"铁路工务安全规程",keyword:["天窗作业","施工防护","作业安全"],content:"铁路现场作业严格遵守安全规范，做好防护联络，规避人身与行车风险。"},
+    {book:"高速铁路施工技术",keyword:["高铁","无砟轨道","高铁施工"],content:"高铁采用无砟轨道，施工精度极高，线路平顺标准远超普速铁路。"}
+];
+
+// 兜底高频问题库（直接匹配回答）
+const backupAnswers = {
+    "工务":"工务是铁路五大系统之一，全称是工务系统，主要负责铁路线路、桥梁、隧道、路基等基础设施的养护维修，是保障列车安全平稳运行的核心部门，常见岗位有线路工、桥隧工、探伤工等。",
+    "中国铁路":"中国铁路是国民经济的大动脉，截至2025年，营业里程超15万公里，其中高铁里程超4.5万公里，居世界第一，形成了“八纵八横”高速铁路网，技术水平和运营规模全球领先。"
+};
+
+let isLoading = false;
+
+// 1.多问题智能拆分函数（逗号、句号、顿号、换行全部识别拆分）
+function splitMultiQuestion(text){
+    let list = text.replace(/[\n\r]/g,"，").split(/[，。；、?？]/).filter(item=>item.trim().length>2);
+    return [...new Set(list)];
+}
+
+// 2.长文本自动分段精简排版
+function formatLongText(str){
+    if(!str) return str;
+    str = str.replace(/\s+/g," ").trim();
+    let arr = [];
+    let temp = "";
+    let count = 0;
+    for(let s of str){
+        temp += s;
+        count++;
+        if(count>=35 && /[。，；！？]/.test(s)){
+            arr.push(temp);
+            temp = "";
+            count = 0;
+        }
+    }
+    if(temp) arr.push(temp);
+    return arr.join("\n");
+}
+
+// 自主学习匹配
+function matchMemory(question){
+    for(let item of learnMemory){
+        if(question.includes(item.q)||item.q.includes(question)) return item.a;
+    }
+    return null;
+}
+
+// 存入学习记忆
+function saveLearn(q,a){
+    learnMemory.push({q:q,a:a});
+    if(learnMemory.length>30) learnMemory.shift();
+}
+
+// 全网搜索总结（优化接口，备用接口兜底）
+async function getSearchAnswer(msg){
+    // 优先用第一个接口
+    try{
+        let res = await fetch(searchApi+encodeURIComponent(msg+" 铁路专业知识"));
+        let data = await res.json();
+        if(data.code===200) return formatLongText(data.content);
+    }catch(e){}
+    // 备用接口兜底
+    try{
+        let res = await fetch("https://api.52vmy.cn/api/wl/chat",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({msg:"你是铁路专业老师，简洁回答："+msg})
+        });
+        let data = await res.json();
+        if(data.code===200) return formatLongText(data.data);
+    }catch(e){}
+    return null;
+}
+
+// 书籍知识库匹配
+function getBookAnswer(msg){
+    let resList = [];
+    for(let book of bookLib){
+        for(let k of book.keyword){
+            if(msg.includes(k)){
+                resList.push(`【${book.book}】${book.content}`);
+                break;
+            }
+        }
+    }
+    if(resList.length>0) return formatLongText(resList.join("\n\n"));
+    return null;
+}
+
+// 兜底高频问题匹配
+function getBackupAnswer(msg){
+    for(let key in backupAnswers){
+        if(msg.includes(key)){
+            return backupAnswers[key];
+        }
+    }
+    return null;
+}
+
+// 创建对话元素
+function createMsg(who,text){
+    let div = document.createElement("div");
+    div.className = "chat-item "+(who=="user"?"user-say":"ai-say");
+    div.innerText = text;
+    return div;
+}
+
+// 主发送逻辑（支持多问题批量解答，修复优先级）
+async function sendMsg(){
+    let input = document.getElementById("userText");
+    let text = input.value.trim();
+    if(!text||isLoading) return;
+    isLoading = true;
+    let box = document.getElementById("chatBox");
+    let inArea = box.querySelector(".input-area");
+
+    box.insertBefore(createMsg("user","我："+text),inArea);
+    input.value = "";
+    let tip = createMsg("ai","正在拆分问题+整合资料解答中...");
+    box.insertBefore(tip,inArea);
+
+    // 拆分多个问题
+    let qList = splitMultiQuestion(text);
+    let allAnswer = "";
+    if(qList.length>1){
+        allAnswer += "已识别多个问题，逐条解答：\n\n";
+        for(let i=0;i<qList.length;i++){
+            let q = qList[i];
+            // 修复优先级：记忆→兜底高频→书籍→搜索
+            let oneAns = matchMemory(q) || getBackupAnswer(q) || getBookAnswer(q) || await getSearchAnswer(q) || "暂无相关资料";
+            allAnswer += `${i+1}.${q}\n${oneAns}\n\n`;
+        }
+    }else{
+        allAnswer = matchMemory(text) || getBackupAnswer(text) || getBookAnswer(text) || await getSearchAnswer(text) || "当前服务繁忙，请咨询铁路相关专业问题";
+    }
+
+    tip.remove();
+    box.insertBefore(createMsg("ai","AI助手："+allAnswer),inArea);
+    saveLearn(text,allAnswer);
+    isLoading = false;
+    box.scrollTop = box.scrollHeight;
+}
+
+// 回车发送
+document.getElementById("userText").addEventListener("keydown",e=>{
+    if(e.key==="Enter") sendMsg();
+})
+</script>
+</body>
+</html>
