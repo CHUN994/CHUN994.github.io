@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI助手 | 铁路风采</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .chat-box{
+            background:rgba(30,41,59,0.7);
+            border-radius:12px;
+            padding:25px;
+            margin:30px auto;
+            max-width:800px;
+        }
+        .chat-item{
+            margin:15px 0;
+            line-height:1.8;
+        }
+        .user-say{
+            text-align:right;
+            color:#f0b468;
+        }
+        .ai-say{
+            text-align:left;
+            color:#e5e7eb;
+        }
+        .input-area{
+            display:flex;
+            gap:10px;
+            margin-top:30px;
+        }
+        .input-area input{
+            flex:1;
+            padding:12px 15px;
+            border:none;
+            border-radius:8px;
+            background:#1e293b;
+            color:#fff;
+            outline:none;
+        }
+        .input-area button{
+            padding:12px 25px;
+            background:#f0b468;
+            color:#000;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:bold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <div class="logo">铁路风采</div>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="system-chewu.html">车务</a></li>
+                <li><a href="system-jiwu.html">机务</a></li>
+                <li><a href="system-gongwu.html">工务</a></li>
+                <li><a href="system-dianwu.html">电务</a></li>
+                <li><a href="system-cheliang.html">车辆</a></li>
+                <li><a href="life-photo.html">图文纪实</a></li>
+                <li><a href="ai.html" class="active">AI助手</a></li>
+                <li><a href="about-us.html">关于我们</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <section class="page-header" style="background: url('../images/9.jpg') center/cover no-repeat;">
+        <div class="page-header-content">
+            <h1>铁路智能AI助手</h1>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="section-title">
+            <h2>在线问答 · 知识科普</h2>
+            <p>随时咨询铁路相关知识、岗位常识与行业资讯</p>
+        </div>
+
+        <div class="chat-box" id="chatBox">
+            <div class="chat-item ai-say">
+                AI助手：您好！我是铁路专属智能助手，您可以向我询问铁路五大系统、岗位知识、专业常识等问题~
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="userText" placeholder="在此输入您想问的问题...">
+                <button onclick="sendMsg()">发送咨询</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 铁路主题课程作业 | 版权所有</p>
+    </footer>
+
+<script>
+let isLoading = false;
+
+// 三个免费大模型接口 → 自动轮询 永不失效
+const apiList = [
+  "https://api.pearktrue.cn/api/chat/",
+  "https://api.xiaoheihe.cn/maxjail/chat/",
+  "https://api.lolimi.cn/API/AI/api.php"
+];
+
+async function askAI(msg) {
+  for (let url of apiList) {
+    try {
+      let res;
+      if (url.includes("lolimi")) {
+        res = await fetch(url + "?msg=" + encodeURIComponent(msg));
+      } else {
+        res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: "你是铁路专业助手，简洁专业回答：" + msg
+          })
+        });
+      }
+      let data = await res.json();
+      let txt = data.data || data.content || data.response;
+      if (txt) return txt;
+    } catch (e) {}
+  }
+  return "服务繁忙，请稍后再试";
+}
+
+async function sendMsg() {
+  let t = document.getElementById("userText");
+  let text = t.value.trim();
+  if (!text || isLoading) return;
+  
+  isLoading = true;
+  let box = document.getElementById("chatBox");
+  let input = box.querySelector(".input-area");
+  
+  // 插入用户消息
+  box.insertBefore(createMsg("user", "我：" + text), input);
+  t.value = "";
+  
+  // 加载提示
+  let tip = createMsg("ai", "AI正在思考中...");
+  box.insertBefore(tip, input);
+
+  let reply = await askAI(text);
+  
+  tip.remove();
+  box.insertBefore(createMsg("ai", "AI助手：" + reply), input);
+  isLoading = false;
+  box.scrollTop = box.scrollHeight;
+}
+
+function createMsg(who, text) {
+  let d = document.createElement("div");
+  d.className = "chat-item " + (who === "user" ? "user-say" : "ai-say");
+  d.innerText = text;
+  return d;
+}
+
+// 回车发送
+document.getElementById("userText").addEventListener("keydown", e => {
+  if (e.key === "Enter") sendMsg();
+});
+</script>
+</body>
+</html>
