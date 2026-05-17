@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI助手 | 铁路风采</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .chat-box{
+            background:rgba(30,41,59,0.7);
+            border-radius:12px;
+            padding:25px;
+            margin:30px auto;
+            max-width:800px;
+        }
+        .chat-item{
+            margin:15px 0;
+            line-height:1.8;
+        }
+        .user-say{
+            text-align:right;
+            color:#f0b468;
+        }
+        .ai-say{
+            text-align:left;
+            color:#e5e7eb;
+        }
+        .input-area{
+            display:flex;
+            gap:10px;
+            margin-top:30px;
+        }
+        .input-area input{
+            flex:1;
+            padding:12px 15px;
+            border:none;
+            border-radius:8px;
+            background:#1e293b;
+            color:#fff;
+            outline:none;
+        }
+        .input-area button{
+            padding:12px 25px;
+            background:#f0b468;
+            color:#000;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:bold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <div class="logo">铁路风采</div>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="system-chewu.html">车务</a></li>
+                <li><a href="system-jiwu.html">机务</a></li>
+                <li><a href="system-gongwu.html">工务</a></li>
+                <li><a href="system-dianwu.html">电务</a></li>
+                <li><a href="system-cheliang.html">车辆</a></li>
+                <li><a href="life-photo.html">图文纪实</a></li>
+                <li><a href="ai.html" class="active">AI助手</a></li>
+                <li><a href="about-us.html">关于我们</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <section class="page-header" style="background: url('../images/9.jpg') center/cover no-repeat;">
+        <div class="page-header-content">
+            <h1>铁路智能AI助手</h1>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="section-title">
+            <h2>在线问答 · 知识科普</h2>
+            <p>随时咨询铁路相关知识、岗位常识与行业资讯</p>
+        </div>
+
+        <div class="chat-box" id="chatBox">
+            <div class="chat-item ai-say">
+                AI助手：您好！我是铁路专属智能助手，您可以向我询问铁路五大系统、岗位知识、专业常识等问题~
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="userText" placeholder="在此输入您想问的问题...">
+                <button onclick="sendMsg()">发送咨询</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 铁路主题课程作业 | 版权所有</p>
+    </footer>
+
+<script>
+let isLoading = false;
+
+// 【终极版】5个免费接口轮询
+const apiList = [
+  "https://api.pearktrue.cn/api/chat/",
+  "https://api.xiaoheihe.cn/maxjail/chat/",
+  "https://api.lolimi.cn/API/AI/api.php",
+  "https://api.52vmy.cn/api/wl/chat",
+  "https://api.qqxnb.cn/api/chat"
+];
+
+async function getReplyFromAPI(msg, idx=0) {
+  if (idx >= apiList.length) return null;
+  try {
+    let url = apiList[idx];
+    let res;
+    if (url.includes("lolimi")) {
+      res = await fetch(url + "?msg=" + encodeURIComponent(msg));
+    } else {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: "你是铁路专业学习助手，回答简洁专业，贴合铁道工程、线路、桥隧、工电相关知识。用户问题：" + msg
+        })
+      });
+    }
+    let data = await res.json();
+    let txt = data.data || data.content || data.response || data.reply;
+    if (txt && typeof txt === "string" && txt.length > 0) {
+      return txt;
+    }
+    return await getReplyFromAPI(msg, idx+1);
+  } catch (e) {
+    return await getReplyFromAPI(msg, idx+1);
+  }
+}
+
+// 【兜底预设回复】接口全挂也能正常对话
+const backupReplies = {
+  "1+1": "1+1=2，如果你想了解铁路相关的专业知识，可以直接问我哦~",
+  "铁路": "铁路是国民经济的大动脉，主要由线路、桥梁、隧道、信号、通信等多个系统组成，是重要的交通基础设施。",
+  "线路工": "线路工主要负责铁路线路的养护维修，重点检查轨道几何尺寸、钢轨状态，确保列车安全平稳运行。",
+  "桥隧工": "桥隧工负责铁路桥梁和隧道的日常巡检与病害整治，保障桥隧结构稳定，是线路安全的重要保障。",
+  "电务": "电务系统负责铁路信号、通信设备的维护，包括联锁、闭塞、列控系统，是列车运行的‘眼睛和神经’。",
+  "车辆": "车辆段负责铁路车辆的检修、维护与整备，确保列车的走行部、制动系统等关键部件状态良好。",
+  "default": "我是铁路专属助手，目前可以回答基础的铁路专业问题，比如线路、桥隧、电务等相关知识~"
+};
+
+function getBackupReply(msg) {
+  for (let key in backupReplies) {
+    if (msg.includes(key)) {
+      return backupReplies[key];
+    }
+  }
+  return backupReplies["default"];
+}
+
+async function sendMsg() {
+  let t = document.getElementById("userText");
+  let text = t.value.trim();
+  if (!text || isLoading) return;
+  
+  isLoading = true;
+  let box = document.getElementById("chatBox");
+  let inputArea = box.querySelector(".input-area");
+  
+  // 插入用户消息
+  box.insertBefore(createMsg("user", "我：" + text), inputArea);
+  t.value = "";
+  
+  // 加载提示
+  let tip = createMsg("ai", "AI正在思考中...");
+  box.insertBefore(tip, inputArea);
+
+  // 先试API接口，失败用兜底回复
+  let reply = await getReplyFromAPI(text);
+  if (!reply) {
+    reply = getBackupReply(text);
+  }
+  
+  tip.remove();
+  box.insertBefore(createMsg("ai", "AI助手：" + reply), inputArea);
+  isLoading = false;
+}
+
+function createMsg(who, text) {
+  let d = document.createElement("div");
+  d.className = "chat-item " + (who === "user" ? "user-say" : "ai-say");
+  d.innerText = text;
+  return d;
+}
+
+// 回车发送
+document.getElementById("userText").addEventListener("keydown", e => {
+  if (e.key === "Enter") sendMsg();
+});
+</script>
+</body>
+</html>
