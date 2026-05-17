@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI助手 | 铁路风采</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .chat-box{
+            background:rgba(30,41,59,0.7);
+            border-radius:12px;
+            padding:25px;
+            margin:30px auto;
+            max-width:800px;
+            min-height:400px;
+        }
+        .chat-content{
+            height:300px;
+            overflow-y:auto;
+            margin-bottom:20px;
+        }
+        .chat-item{
+            margin:15px 0;
+            line-height:1.8;
+        }
+        .user-say{
+            text-align:right;
+            color:#f0b468;
+        }
+        .ai-say{
+            text-align:left;
+            color:#e5e7eb;
+        }
+        .input-area{
+            display:flex;
+            gap:10px;
+        }
+        .input-area input{
+            flex:1;
+            padding:12px 15px;
+            border:none;
+            border-radius:8px;
+            background:#1e293b;
+            color:#fff;
+            outline:none;
+        }
+        .input-area button{
+            padding:12px 25px;
+            background:#f0b468;
+            color:#000;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:bold;
+        }
+        .loading{
+            color:#94a3b8;
+            font-style:italic;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <div class="logo">铁路风采</div>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="system-chewu.html">车务</a></li>
+                <li><a href="system-jiwu.html">机务</a></li>
+                <li><a href="system-gongwu.html">工务</a></li>
+                <li><a href="system-dianwu.html">电务</a></li>
+                <li><a href="system-cheliang.html">车辆</a></li>
+                <li><a href="life-photo.html">图文纪实</a></li>
+                <li><a href="ai.html" class="active">AI助手</a></li>
+                <li><a href="about-us.html">关于我们</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <section class="page-header" style="background: url('../images/9.jpg') center/cover no-repeat;">
+        <div class="page-header-content">
+            <h1>在线问答 · 知识科普</h1>
+            <p>随时咨询铁路相关知识、岗位常识与行业资讯</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="chat-box">
+            <div class="chat-content" id="chatBox">
+                <div class="chat-item ai-say">
+                    AI助手：您好！我是铁路专属智能助手，请问您想了解哪方面的知识呢？
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="userText" placeholder="输入问题按下回车或点击发送">
+                <button onclick="sendMsg()">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 铁路主题课程作业 | 版权所有</p>
+    </footer>
+
+<script>
+// 填入你的sk开头密钥
+const API_KEY = "sk-c009ae27211b4ba9bc200b4cf22f8672";
+
+let isLoading = false;
+
+async function sendMsg(){
+    if(isLoading) return;
+    const text = document.getElementById("userText").value.trim();
+    if(!text) return;
+
+    const chatBox = document.getElementById("chatBox");
+    chatBox.innerHTML += `<div class="chat-item user-say">我：${text}</div>`;
+    document.getElementById("userText").value = "";
+
+    const loadingId = `loading-${Date.now()}`;
+    chatBox.innerHTML += `<div class="chat-item ai-say loading" id="${loadingId}">AI助手：正在思考中...</div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+    isLoading = true;
+
+    try {
+        const res = await fetch("https://api.deepseek.com/v1/chat/completions",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                "Authorization":"Bearer "+API_KEY
+            },
+            body:JSON.stringify({
+                model:"deepseek-chat",
+                messages:[
+                    {role:"system",content:"你是铁路专业知识助手，简洁回答铁路五大系统、岗位、行业相关问题。"},
+                    {role:"user",content:text}
+                ]
+            })
+        })
+        const data = await res.json();
+        document.getElementById(loadingId).remove();
+        if(data.choices){
+            chatBox.innerHTML += `<div class="chat-item ai-say">AI助手：${data.choices[0].message.content}</div>`;
+        }else{
+            chatBox.innerHTML += `<div class="chat-item ai-say">AI助手：请求失败，请检查密钥。</div>`;
+        }
+    } catch(e){
+        document.getElementById(loadingId).remove();
+        chatBox.innerHTML += `<div class="chat-item ai-say">AI助手：网络请求异常，上线网页即可正常使用。</div>`;
+    }
+    finally{
+        isLoading=false;
+        chatBox.scrollTop=chatBox.scrollHeight;
+    }
+}
+
+document.getElementById("userText").onkeydown=e=>{
+    if(e.key===`Enter`) sendMsg()
+}
+</script>
+</body>
+</html>
