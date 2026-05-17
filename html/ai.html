@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AI助手测试版</title>
+</head>
+<body>
+    <h1>铁路AI助手测试</h1>
+    <div id="chatBox">
+        <p>AI助手：你好，我是铁路专属助手，请问有什么问题？</p>
+    </div>
+    <input type="text" id="userText" placeholder="输入问题">
+    <button onclick="sendMsg()">发送</button>
+
+<script>
+async function sendMsg() {
+    let text = document.getElementById("userText").value.trim();
+    if (!text) return;
+
+    // 显示用户消息
+    document.getElementById("chatBox").innerHTML += `<p>我：${text}</p>`;
+    document.getElementById("userText").value = "";
+
+    try {
+        // 直接调用DeepSeek API
+        let res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer sk-c009ae27211b4ba9bc200b4cf22f8672"
+            },
+            body: JSON.stringify({
+                model: "deepseek-chat",
+                messages: [
+                    {role:"system", content:"你是铁路专业助手，回答要简洁易懂"},
+                    {role:"user", content:text}
+                ]
+            })
+        });
+
+        if (!res.ok) throw new Error("请求失败");
+        let data = await res.json();
+        document.getElementById("chatBox").innerHTML += `<p>AI助手：${data.choices[0].message.content}</p>`;
+
+    } catch (e) {
+        document.getElementById("chatBox").innerHTML += `<p style="color:red;">错误：${e.message}</p>`;
+    }
+}
+</script>
+</body>
+</html>
